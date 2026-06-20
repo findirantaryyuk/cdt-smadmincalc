@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор мотивации администраторов клиник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .disclaimer {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #9ca3af;
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .disclaimer::before {
+            content: "ℹ️ ";
+            font-style: normal;
+        }
+
+        /* ===== LAYOUT С ДВУМЯ КОЛОНКАМИ ===== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "main hours"
+                "kpi goods"
+                "discipline extra"
+                "calculate calculate"
+                "result result"
+                "secondary secondary";
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-main { grid-area: main; }
+        .card-hours { grid-area: hours; }
+        .card-kpi { grid-area: kpi; }
+        .card-goods { grid-area: goods; }
+        .card-extra { grid-area: extra; }
+        .card-discipline { grid-area: discipline; }
+        .calculate-wrapper { grid-area: calculate; }
+        .result-section { grid-area: result; }
+        .secondary-buttons-wrapper { grid-area: secondary; }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "main"
+                    "hours"
+                    "kpi"
+                    "goods"
+                    "discipline"
+                    "extra"
+                    "calculate"
+                    "result"
+                    "secondary";
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 0;
+        }
+
+        .card h2 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .form-group input[type="number"]::-webkit-inner-spin-button,
+        .form-group input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            display: inline-block;
+            margin-left: 5px;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 11px;
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: normal;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        /* ===== БЛОК КНОПКИ "РАССЧИТАТЬ" ===== */
+        .calculate-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0);
+        }
+
+        /* ===== БЛОК ВТОРИЧНЫХ КНОПОК ===== */
+        .secondary-buttons-wrapper {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .secondary-button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary.print {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-secondary.print:hover {
+            background: #059669;
+        }
+
+        /* ===== РЕЗУЛЬТАТ ===== */
+        .result-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .result-section h2 {
+            color: #667eea;
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .result-total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .result-total-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .result-total-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 13px;
+        }
+
+        .condition-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .condition-icon.pass {
+            background: #10b981;
+            color: white;
+        }
+
+        .condition-icon.fail {
+            background: #ef4444;
+            color: white;
+        }
+
+        .condition-icon.neutral {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* ===== МОДАЛЬНОЕ ОКНО ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 22px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* ===== ПЕЧАТЬ ===== */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .header,
+            .calculate-wrapper,
+            .secondary-buttons-wrapper,
+            .card-main,
+            .card-hours,
+            .card-kpi,
+            .card-goods,
+            .card-extra,
+            .card-discipline {
+                display: none !important;
+            }
+
+            .main-grid {
+                display: block;
+            }
+
+            .result-section {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .secondary-button-group {
+                flex-direction: column;
+            }
+
+            .btn-secondary {
+                width: 100%;
+            }
+
+            .result-total-value {
+                font-size: 24px;
+            }
+        }
+
+        /* ===== ИНФОРМАЦИОННЫЕ БЛОКИ ===== */
+        .info-text {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #0c4a6e;
+        }
+
+        .warning-text {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #991b1b;
+            font-weight: 500;
+        }
+
+        .warning-text strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .warning-text .preserved-note {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 4px;
+            color: #92400e;
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        .plan-info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #92400e;
+        }
+
+        .goods-details {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .zeroed-reason {
+            font-size: 11px;
+            color: #ef4444;
+            font-style: italic;
+            margin-top: 3px;
+        }
+
+        .preserved-reason {
+            font-size: 11px;
+            color: #059669;
+            font-style: italic;
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        .discipline-base-info {
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .bonus-base-info {
+            background: #ecfdf5;
+            border-left: 3px solid #10b981;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💼 Калькулятор мотивации администраторов</h1>
+            <p>Расчёт заработной платы на основе Положения о мотивации</p>
+            <p class="disclaimer">Все расчёты носят исключительно информационный характер и не являются официальным документом. Итоговая сумма заработной платы определяется бухгалтерией на основании фактических данных и утверждённых документов.</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- РЯД 1: Основные данные + Отработанные часы -->
+            <div class="card card-main">
+                <h2>👤 Основные данные</h2>
+                <div class="form-group">
+                    <label>ФИО сотрудника</label>
+                    <input type="text" id="employeeName" placeholder="Иванов Иван Иванович">
+                </div>
+                <div class="form-group">
+                    <label>Грейд</label>
+                    <select id="grade">
+                        <option value="">Выберите грейд</option>
+                        <option value="intern">Стажёр</option>
+                        <option value="junior">Junior Administrator</option>
+                        <option value="middle">Middle Administrator</option>
+                        <option value="senior">Senior Administrator</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card card-hours">
+                <h2>⏰ Отработанные часы</h2>
+                <div class="form-group">
+                    <label>
+                        Количество обычных смен (12 часов)
+                        <span class="tooltip" data-tip="Стандартные смены по 12 часов">?</span>
+                    </label>
+                    <input type="number" id="regularShifts" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>
+                        Сверхурочные часы
+                        <span class="tooltip" data-tip="Часы сверх графика с коэффициентом 1.5">?</span>
+                    </label>
+                    <input type="number" id="overtimeHours" min="0" placeholder="0">
+                </div>
+            </div>
+
+            <!-- РЯД 2: KPI + Продажи товаров -->
+            <div class="card card-kpi">
+                <h2>📊 KPI и результаты</h2>
+                <div class="form-group">
+                    <label>
+                        % выполнения плана клиники
+                        <span class="tooltip" data-tip="Выручка клиники / План × 100%">?</span>
+                    </label>
+                    <input type="number" id="clinicPlanPercent" min="0" max="200" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>
+                        Записи первичных пациентов
+                        <span class="tooltip" data-tip="Количество успешных записей первичных пациентов за месяц">?</span>
+                    </label>
+                    <input type="number" id="primaryPatients" min="0" placeholder="0">
+                </div>
+            </div>
+
+            <div class="card card-goods">
+                <h2>🛍️ Продажи товаров</h2>
+                <div class="form-group">
+                    <label>
+                        Клиника
+                        <span class="tooltip" data-tip="Выберите клинику для определения плана продаж">?</span>
+                    </label>
+                    <select id="clinic" onchange="updatePlanInfo()">
+                        <option value="">Выберите клинику</option>
+                        <option value="shchuka">Щука</option>
+                        <option value="krym">Крым</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        Сумма продаж товаров (₽)
+                        <span class="tooltip" data-tip="Фактическая сумма продаж товаров за месяц">?</span>
+                    </label>
+                    <input type="number" id="goodsSalesAmount" min="0" placeholder="0">
+                </div>
+                <div class="plan-info" id="planInfo" style="display: none;">
+                    План продаж: <strong id="planAmount">0 ₽</strong>
+                </div>
+            </div>
+
+            <!-- РЯД 3: Дисциплина (слева) + Дополнительные параметры (справа) -->
+            <div class="card card-discipline">
+                <h2>✅ Дисциплина и сервис</h2>
+                <div class="form-group">
+                    <label>
+                        Количество подтверждённых замечаний
+                        <span class="tooltip" data-tip="Замечания из CRM, журнала инцидентов, аудита">?</span>
+                    </label>
+                    <input type="number" id="violationsCount" min="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="criticalViolation">
+                        <label for="criticalViolation">
+                            Критичное нарушение сервиса
+                            <span class="tooltip" data-tip="Грубая коммуникация, финансовое нарушение, потеря пациента. При отметке все бонусы обнуляются, кроме доплаты за стаж">?</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-extra">
+                <h2>⚙️ Дополнительные параметры</h2>
+                <div class="form-group">
+                    <label>
+                        Стаж работы в компании
+                        <span class="tooltip" data-tip="Для грейдов Middle и Senior: стаж больше 3 полных лет = +10 000 ₽. Эта доплата не отменяется даже при критичном нарушении">?</span>
+                    </label>
+                    <select id="seniority">
+                        <option value="">Выберите стаж</option>
+                        <option value="less">Менее 3 полных лет</option>
+                        <option value="more">Более 3 полных лет</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- РЯД 4: Кнопка "РАССЧИТАТЬ" на всю ширину -->
+            <div class="calculate-wrapper">
+                <button class="btn-calculate" onclick="calculate()">🧮 Рассчитать</button>
+            </div>
+
+            <!-- РЯД 5: Результат расчёта на всю ширину -->
+            <div class="result-section" id="resultSection">
+                <h2>💰 Результат расчёта</h2>
+                <div id="resultContent">
+                    <div class="info-text">
+                        Заполните форму и нажмите "Рассчитать" для получения детализации дохода
+                    </div>
+                </div>
+            </div>
+
+            <!-- РЯД 6: Вторичные кнопки на всю ширину -->
+            <div class="secondary-buttons-wrapper">
+                <div class="secondary-button-group">
+                    <button class="btn-secondary" onclick="resetForm()">🔄 Сбросить</button>
+                    <button class="btn-secondary print" onclick="printResult()">🖨️ Печать</button>
+                    <button class="btn-secondary" onclick="copyResult()">📋 Копировать</button>
+                    <button class="btn-secondary" onclick="showHelp()">❓ Как пользоваться</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="helpModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 Как пользоваться калькулятором</h2>
+                <button class="close-btn" onclick="closeHelp()">&times;</button>
+            </div>
+            <div>
+                <h3 style="color: #667eea; margin: 15px 0 10px;">1. Основные данные</h3>
+                <p>Укажите ФИО сотрудника и выберите его грейд.</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">2. Отработанные часы</h3>
+                <p>Введите количество обычных смен (по 12 часов) и сверхурочных часов.</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">3. KPI и результаты</h3>
+                <p>Укажите процент выполнения плана клиники и количество записей первичных пациентов.</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">📌 Как рассчитываются бонусы</h3>
+                <ul style="margin: 8px 0 8px 20px; font-size: 13px;">
+                    <li><strong>Командный бонус</strong> (% от выполнения плана клиники) считается от <strong>фактической суммы выплат за часы</strong> (обычные смены + сверхурочные).</li>
+                    <li><strong>Индивидуальный бонус</strong> (за первичных пациентов) считается от нормативного оклада (ставка × 15 смен).</li>
+                </ul>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">4. Продажи товаров</h3>
+                <p>Выберите клинику и укажите фактическую сумму продаж товаров. План продаж: Щука — 720 000 ₽, Крым — 560 000 ₽.</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">5. Дисциплина и сервис</h3>
+                <p>Введите количество подтверждённых замечаний и отметьте наличие критичных нарушений.</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">📌 Как рассчитывается коэффициент дисциплины</h3>
+                <p>Коэффициент дисциплины (+15%, -10%, -15% или 0%) применяется ко <strong>всей сумме выплат</strong>, включая:</p>
+                <ul style="margin: 8px 0 8px 20px; font-size: 13px;">
+                    <li>Фиксированную часть (оклад за смены)</li>
+                    <li>Командный бонус (KPI клиники)</li>
+                    <li>Индивидуальный бонус (первичные пациенты)</li>
+                    <li>Доплату за стаж (если применима)</li>
+                    <li>Доплату за продажу товаров (если начислена)</li>
+                </ul>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">📌 Доплата за стаж</h3>
+                <p>Доплата <strong>10 000 ₽</strong> начисляется сотрудникам грейдов <strong>Middle</strong> и <strong>Senior</strong> при стаже работы в компании <strong>более 3 полных лет</strong>. Эта доплата не отменяется даже при критичном нарушении сервиса и учитывается в базе для расчёта коэффициента дисциплины.</p>
+                
+                <h3 style="color: #ef4444; margin: 15px 0 10px;">⚠️ Важно: критичное нарушение</h3>
+                <p>Если отмечено критичное нарушение сервиса, то:</p>
+                <ul style="margin: 8px 0 8px 20px; font-size: 13px;">
+                    <li>❌ Обнуляются: командный бонус, индивидуальный бонус, доплата за товары, коэффициент дисциплины</li>
+                    <li>✅ <strong>Сохраняются:</strong> оклад за отработанные смены, сверхурочные и <strong>доплата за стаж</strong> (если применима)</li>
+                </ul>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">6. Дополнительные параметры</h3>
+                <p>Укажите стаж работы (более или менее 3 полных лет).</p>
+                
+                <h3 style="color: #667eea; margin: 15px 0 10px;">7. Расчёт</h3>
+                <p>Нажмите кнопку "Рассчитать" для получения детализации дохода.</p>
+                
+                <div class="info-text" style="margin-top: 20px;">
+                    <strong>💡 Совет:</strong> Наведите курсор на значок "?" рядом с полями для получения подробной информации.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== КОНФИГУРАЦИЯ =====
+        const CONFIG = {
+            grades: {
+                intern: { hourlyRate: 350, shiftRate: 4200, name: 'Стажёр' },
+                junior: { hourlyRate: 350, shiftRate: 4200, name: 'Junior Administrator' },
+                middle: { hourlyRate: 400, shiftRate: 4800, name: 'Middle Administrator' },
+                senior: { hourlyRate: 450, shiftRate: 5400, name: 'Senior Administrator' }
+            },
+            normativeShifts: 15,
+            teamBonus: [
+                { min: 101, max: Infinity, percent: 80 },
+                { min: 86, max: 100, percent: 60 },
+                { min: 70, max: 85, percent: 40 },
+                { min: 0, max: 69, percent: 20 }
+            ],
+            individualBonus: [
+                { min: 30, max: Infinity, percent: 40 },
+                { min: 10, max: 29, percent: 20 },
+                { min: 0, max: 9, percent: 0 }
+            ],
+            discipline: {
+                perfect: 0.15,
+                minor: -0.10,
+                major: -0.15,
+                critical: 0,
+                neutral: 0
+            },
+            disciplineConditions: {
+                minShifts: 12
+            },
+            seniorityBonus: {
+                amount: 10000,
+                grades: ['middle', 'senior']
+            },
+            goodsBonus: {
+                amount: 5000,
+                plans: {
+                    shchuka: 720000,
+                    krym: 560000
+                }
+            },
+            overtimeMultiplier: 1.5
+        };
+
+        // ===== ФУНКЦИИ РАСЧЁТА =====
+        
+        function calculateFixedPart(grade, regularShifts, overtimeHours) {
+            const gradeConfig = CONFIG.grades[grade];
+            const regularPay = regularShifts * gradeConfig.shiftRate;
+            const overtimePay = overtimeHours * gradeConfig.hourlyRate * CONFIG.overtimeMultiplier;
+            
+            return {
+                regular: regularPay,
+                overtime: overtimePay,
+                total: regularPay + overtimePay
+            };
+        }
+
+        function calculateTeamBonus(grade, clinicPlanPercent, hoursBase) {
+            if (grade === 'intern') return { percent: 0, amount: 0, base: 0 };
+            
+            const bonusRule = CONFIG.teamBonus.find(rule => 
+                clinicPlanPercent >= rule.min && clinicPlanPercent <= rule.max
+            );
+            
+            const percent = bonusRule ? bonusRule.percent : 0;
+            const amount = hoursBase * (percent / 100);
+            
+            return { percent, amount, base: hoursBase };
+        }
+
+        function calculateIndividualBonus(grade, primaryPatients) {
+            if (grade === 'intern') return { percent: 0, amount: 0 };
+            
+            const baseSalary = CONFIG.grades[grade].shiftRate * CONFIG.normativeShifts;
+            const bonusRule = CONFIG.individualBonus.find(rule => 
+                primaryPatients >= rule.min && primaryPatients <= rule.max
+            );
+            
+            const percent = bonusRule ? bonusRule.percent : 0;
+            const amount = baseSalary * (percent / 100);
+            
+            return { percent, amount };
+        }
+
+        function calculateDisciplineCoefficient(violationsCount, criticalViolation, regularShifts) {
+            if (criticalViolation) {
+                return {
+                    coefficient: CONFIG.discipline.critical,
+                    reason: 'Критичное нарушение сервиса',
+                    type: 'critical'
+                };
+            }
+            
+            if (violationsCount >= 4) {
+                return {
+                    coefficient: CONFIG.discipline.major,
+                    reason: '4 и более подтверждённых замечаний',
+                    type: 'major'
+                };
+            }
+            
+            if (violationsCount > 0 && violationsCount <= 3) {
+                return {
+                    coefficient: CONFIG.discipline.minor,
+                    reason: '1-3 подтверждённых замечания',
+                    type: 'minor'
+                };
+            }
+            
+            const shiftsOk = regularShifts >= CONFIG.disciplineConditions.minShifts;
+            
+            if (shiftsOk) {
+                return {
+                    coefficient: CONFIG.discipline.perfect,
+                    reason: 'Отсутствие нарушений, отработано ≥12 смен',
+                    type: 'perfect'
+                };
+            } else {
+                return {
+                    coefficient: CONFIG.discipline.neutral,
+                    reason: 'Нет нарушений, но не выполнено условие по количеству смен',
+                    type: 'neutral'
+                };
+            }
+        }
+
+        function calculateSeniorityBonus(grade, seniority) {
+            if (CONFIG.seniorityBonus.grades.includes(grade) && seniority === 'more') {
+                return CONFIG.seniorityBonus.amount;
+            }
+            return 0;
+        }
+
+        function calculateGoodsBonus(clinic, goodsSalesAmount) {
+            const plan = CONFIG.goodsBonus.plans[clinic];
+            const planAchieved = goodsSalesAmount >= plan;
+            const percent = plan > 0 ? Math.round((goodsSalesAmount / plan) * 100) : 0;
+            
+            return {
+                amount: planAchieved ? CONFIG.goodsBonus.amount : 0,
+                planAchieved,
+                plan,
+                percent,
+                salesAmount: goodsSalesAmount
+            };
+        }
+
+        function updatePlanInfo() {
+            const clinic = document.getElementById('clinic').value;
+            const planInfo = document.getElementById('planInfo');
+            
+            if (clinic && CONFIG.goodsBonus.plans[clinic]) {
+                const plan = CONFIG.goodsBonus.plans[clinic];
+                document.getElementById('planAmount').textContent = formatCurrency(plan);
+                planInfo.style.display = 'block';
+            } else {
+                planInfo.style.display = 'none';
+            }
+            hasUnsavedData = true;
+        }
+
+        // ===== ГЛАВНАЯ ФУНКЦИЯ РАСЧЁТА =====
+        function calculate() {
+            try {
+                const grade = document.getElementById('grade').value;
+                const clinic = document.getElementById('clinic').value;
+                
+                if (!grade) {
+                    showError('Пожалуйста, выберите грейд сотрудника');
+                    return;
+                }
+                
+                if (!clinic) {
+                    showError('Пожалуйста, выберите клинику');
+                    return;
+                }
+
+                const regularShifts = parseInt(document.getElementById('regularShifts').value) || 0;
+                const overtimeHours = parseInt(document.getElementById('overtimeHours').value) || 0;
+                const clinicPlanPercent = parseFloat(document.getElementById('clinicPlanPercent').value) || 0;
+                const primaryPatients = parseInt(document.getElementById('primaryPatients').value) || 0;
+                const goodsSalesAmount = parseFloat(document.getElementById('goodsSalesAmount').value) || 0;
+                const violationsCount = parseInt(document.getElementById('violationsCount').value) || 0;
+                const criticalViolation = document.getElementById('criticalViolation').checked;
+                const seniority = document.getElementById('seniority').value;
+                const employeeName = document.getElementById('employeeName').value || 'Сотрудник';
+
+                if (regularShifts < 0 || overtimeHours < 0) {
+                    showError('Количество смен и часов не может быть отрицательным');
+                    return;
+                }
+
+                if (clinicPlanPercent < 0 || clinicPlanPercent > 200) {
+                    showError('Процент выполнения плана должен быть от 0 до 200');
+                    return;
+                }
+
+                const fixedPart = calculateFixedPart(grade, regularShifts, overtimeHours);
+                const teamBonus = calculateTeamBonus(grade, clinicPlanPercent, fixedPart.total);
+                const individualBonus = calculateIndividualBonus(grade, primaryPatients);
+                const discipline = calculateDisciplineCoefficient(violationsCount, criticalViolation, regularShifts);
+                const seniorityBonus = calculateSeniorityBonus(grade, seniority);
+                const goodsBonus = calculateGoodsBonus(clinic, goodsSalesAmount);
+
+                let criticalViolationApplied = false;
+                if (criticalViolation) {
+                    criticalViolationApplied = true;
+                    
+                    teamBonus.percent = 0;
+                    teamBonus.amount = 0;
+                    teamBonus.zeroedReason = 'Обнулено из-за критичного нарушения';
+                    
+                    individualBonus.percent = 0;
+                    individualBonus.amount = 0;
+                    individualBonus.zeroedReason = 'Обнулено из-за критичного нарушения';
+                    
+                    goodsBonus.amount = 0;
+                    goodsBonus.planAchieved = false;
+                    goodsBonus.zeroedReason = 'Обнулено из-за критичного нарушения';
+                    
+                    discipline.zeroedReason = 'Обнулено из-за критичного нарушения';
+                }
+
+                const baseForDiscipline = fixedPart.total 
+                    + teamBonus.amount 
+                    + individualBonus.amount 
+                    + seniorityBonus 
+                    + goodsBonus.amount;
+                
+                const disciplineAdjustment = baseForDiscipline * discipline.coefficient;
+                const total = baseForDiscipline + disciplineAdjustment;
+
+                const clinicName = clinic === 'shchuka' ? 'Щука' : 'Крым';
+                const isSeniorityEligibleGrade = CONFIG.seniorityBonus.grades.includes(grade);
+
+                displayResult({
+                    employeeName,
+                    grade: CONFIG.grades[grade].name,
+                    fixedPart,
+                    teamBonus,
+                    individualBonus,
+                    discipline,
+                    disciplineAdjustment,
+                    baseForDiscipline,
+                    seniorityBonus,
+                    goodsBonus,
+                    clinicName,
+                    total,
+                    criticalViolationApplied,
+                    isSeniorityEligibleGrade,
+                    conditions: {
+                        shiftsOk: regularShifts >= CONFIG.disciplineConditions.minShifts,
+                        seniorityOk: isSeniorityEligibleGrade && seniority === 'more',
+                        goodsPlanOk: goodsBonus.planAchieved && !criticalViolationApplied
+                    }
+                });
+
+                // Прокрутка к блоку результата
+                setTimeout(() => {
+                    document.getElementById('resultSection').scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 100);
+
+                console.log('Расчёт завершён:', { 
+                    total, 
+                    baseForDiscipline, 
+                    teamBonusBase: teamBonus.base,
+                    seniorityBonus,
+                    disciplineAdjustment,
+                    criticalViolationApplied 
+                });
+                saveToLocalStorage();
+                hasUnsavedData = false;
+
+            } catch (error) {
+                showError('Ошибка при расчёте: ' + error.message);
+                console.error('Ошибка расчёта:', error);
+            }
+        }
+
+        // ===== ОТОБРАЖЕНИЕ РЕЗУЛЬТАТА =====
+        function displayResult(data) {
+            const resultContent = document.getElementById('resultContent');
+            
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <strong>${data.employeeName}</strong><br>
+                    <span style="color: #666; font-size: 13px;">${data.grade}</span>
+                </div>
+            `;
+
+            if (data.criticalViolationApplied) {
+                html += `
+                    <div class="warning-text">
+                        <strong>⚠️ Критичное нарушение сервиса</strong>
+                        Все бонусы (KPI клиники, первичные пациенты, доплата за товары) и коэффициент дисциплины обнулены. 
+                        Выплачивается оклад за отработанные смены и сверхурочные.
+                        <div class="preserved-note">
+                            💾 <strong>Сохраняется:</strong> доплата за стаж (при наличии) — она не отменяется критичным нарушением 
+                            и учитывается в базе для коэффициента дисциплины.
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="result-item">
+                    <span class="result-label">Фиксированная часть (обычные смены)</span>
+                    <span class="result-value">${formatCurrency(data.fixedPart.regular)}</span>
+                </div>
+            `;
+
+            if (data.fixedPart.overtime > 0) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Сверхурочные часы (×1.5)</span>
+                    <span class="result-value">${formatCurrency(data.fixedPart.overtime)}</span>
+                </div>`;
+            }
+
+            if (data.teamBonus.percent > 0) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Командный бонус (${data.teamBonus.percent}%)</span>
+                    <span class="result-value">${formatCurrency(data.teamBonus.amount)}</span>
+                </div>
+                <div class="bonus-base-info">
+                    📊 База расчёта (смены + сверхурочные): <strong>${formatCurrency(data.teamBonus.base)}</strong>
+                </div>`;
+            } else if (data.teamBonus.zeroedReason) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Командный бонус</span>
+                    <span class="result-value" style="color: #ef4444;">0 ₽</span>
+                </div>
+                <div class="zeroed-reason">↳ ${data.teamBonus.zeroedReason}</div>`;
+            }
+
+            if (data.individualBonus.percent > 0) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Индивидуальный бонус (${data.individualBonus.percent}%)</span>
+                    <span class="result-value">${formatCurrency(data.individualBonus.amount)}</span>
+                </div>`;
+            } else if (data.individualBonus.zeroedReason) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Индивидуальный бонус</span>
+                    <span class="result-value" style="color: #ef4444;">0 ₽</span>
+                </div>
+                <div class="zeroed-reason">↳ ${data.individualBonus.zeroedReason}</div>`;
+            }
+
+            if (data.seniorityBonus > 0) {
+                html += `
+                <div class="result-item">
+                    <span class="result-label">Доплата за стаж (Middle/Senior, >3 лет)</span>
+                    <span class="result-value">${formatCurrency(data.seniorityBonus)}</span>
+                </div>`;
+                
+                if (data.criticalViolationApplied) {
+                    html += `
+                    <div class="preserved-reason">
+                        ✓ Сохраняется несмотря на критичное нарушение (входит в базу для коэффициента дисциплины)
+                    </div>`;
+                }
+            }
+
+            if (data.goodsBonus.zeroedReason) {
+                html += `
+                    <div class="result-item">
+                        <span class="result-label">Доплата за продажу товаров</span>
+                        <span class="result-value" style="color: #ef4444;">0 ₽</span>
+                    </div>
+                    <div class="goods-details">
+                        <div>Клиника: <strong>${data.clinicName}</strong></div>
+                        <div>План продаж: <strong>${formatCurrency(data.goodsBonus.plan)}</strong></div>
+                        <div>Факт продаж: <strong>${formatCurrency(data.goodsBonus.salesAmount)}</strong></div>
+                        <div>Выполнение плана: <strong>${data.goodsBonus.percent}%</strong></div>
+                        <div style="margin-top: 5px; color: #ef4444; font-weight: 500;">
+                            ✗ Доплата обнулена
+                        </div>
+                        <div class="zeroed-reason">↳ ${data.goodsBonus.zeroedReason}</div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="result-item">
+                        <span class="result-label">Доплата за продажу товаров</span>
+                        <span class="result-value" style="color: ${data.goodsBonus.amount > 0 ? '#10b981' : '#ef4444'}">
+                            ${formatCurrency(data.goodsBonus.amount)}
+                        </span>
+                    </div>
+                    <div class="goods-details">
+                        <div>Клиника: <strong>${data.clinicName}</strong></div>
+                        <div>План продаж: <strong>${formatCurrency(data.goodsBonus.plan)}</strong></div>
+                        <div>Факт продаж: <strong>${formatCurrency(data.goodsBonus.salesAmount)}</strong></div>
+                        <div>Выполнение плана: <strong>${data.goodsBonus.percent}%</strong></div>
+                        <div style="margin-top: 5px; color: ${data.goodsBonus.planAchieved ? '#10b981' : '#ef4444'}">
+                            ${data.goodsBonus.planAchieved ? '✓ План выполнен — доплата начислена' : '✗ План не выполнен — доплата не начислена'}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="discipline-base-info">
+                    📊 База для расчёта коэффициента дисциплины: <strong>${formatCurrency(data.baseForDiscipline)}</strong>
+                    <div style="margin-top: 4px; font-size: 10px;">
+                        (фикс + бонус KPI + бонус первичных + доплата за стаж + доплата за товары)
+                    </div>
+                </div>
+            `;
+
+            let disciplineColor = '#666';
+            if (data.disciplineAdjustment > 0) disciplineColor = '#10b981';
+            if (data.disciplineAdjustment < 0) disciplineColor = '#ef4444';
+
+            html += `
+                <div class="result-item">
+                    <span class="result-label">Коэффициент дисциплины (${formatPercent(data.discipline.coefficient)})</span>
+                    <span class="result-value" style="color: ${disciplineColor}">
+                        ${data.disciplineAdjustment > 0 ? '+' : ''}${formatCurrency(data.disciplineAdjustment)}
+                    </span>
+                </div>
+                <div style="font-size: 12px; color: #666; margin: -8px 0 12px 0; padding-left: 10px;">
+                    ${data.discipline.reason}
+                </div>
+            `;
+
+            html += `
+                <div class="result-total">
+                    <div class="result-total-label">ИТОГО К ВЫПЛАТЕ</div>
+                    <div class="result-total-value">${formatCurrency(data.total)}</div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 14px; color: #667eea; margin-bottom: 10px;">Выполнение условий:</h3>
+                    <div class="condition-item">
+                        <span class="condition-icon ${data.conditions.shiftsOk ? 'pass' : 'fail'}">
+                            ${data.conditions.shiftsOk ? '✓' : '✗'}
+                        </span>
+                        <span>Отработано ≥12 смен (${data.conditions.shiftsOk ? 'выполнено' : 'не выполнено'})</span>
+                    </div>
+            `;
+
+            if (data.isSeniorityEligibleGrade) {
+                html += `
+                    <div class="condition-item">
+                        <span class="condition-icon ${data.conditions.seniorityOk ? 'pass' : 'fail'}">
+                            ${data.conditions.seniorityOk ? '✓' : '✗'}
+                        </span>
+                        <span>Стаж более 3 полных лет (${data.conditions.seniorityOk ? 'выполнено' : 'не выполнено'})</span>
+                    </div>
+                `;
+            }
+
+            if (!data.criticalViolationApplied) {
+                html += `
+                    <div class="condition-item">
+                        <span class="condition-icon ${data.conditions.goodsPlanOk ? 'pass' : 'fail'}">
+                            ${data.conditions.goodsPlanOk ? '✓' : '✗'}
+                        </span>
+                        <span>План продаж товаров в клинике "${data.clinicName}" (${data.conditions.goodsPlanOk ? 'выполнен' : 'не выполнен'})</span>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="condition-item">
+                        <span class="condition-icon fail">✗</span>
+                        <span>Критичное нарушение — бонусы обнулены</span>
+                    </div>
+                `;
+                
+                if (data.seniorityBonus > 0) {
+                    html += `
+                        <div class="condition-item">
+                            <span class="condition-icon neutral">💾</span>
+                            <span>Доплата за стаж сохранена (${formatCurrency(data.seniorityBonus)})</span>
+                        </div>
+                    `;
+                }
+            }
+
+            html += `</div>`;
+
+            resultContent.innerHTML = html;
+            window.lastCalculationResult = data;
+        }
+
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+        function formatCurrency(amount) {
+            if (isNaN(amount) || amount === null || amount === undefined) {
+                amount = 0;
+            }
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function formatPercent(value) {
+            const percent = value * 100;
+            if (percent === 0) return '0%';
+            return (percent > 0 ? '+' : '') + percent.toFixed(0) + '%';
+        }
+
+        function showError(message) {
+            alert('⚠️ ' + message);
+        }
+
+        // ===== УПРАВЛЕНИЕ ФОРМОЙ =====
+        function resetForm() {
+            if (confirm('Вы уверены, что хотите сбросить все данные?')) {
+                document.getElementById('employeeName').value = '';
+                document.getElementById('grade').value = '';
+                document.getElementById('regularShifts').value = '';
+                document.getElementById('overtimeHours').value = '';
+                document.getElementById('clinicPlanPercent').value = '';
+                document.getElementById('primaryPatients').value = '';
+                document.getElementById('clinic').value = '';
+                document.getElementById('goodsSalesAmount').value = '';
+                document.getElementById('violationsCount').value = '';
+                document.getElementById('criticalViolation').checked = false;
+                document.getElementById('seniority').value = '';
+                
+                document.getElementById('planInfo').style.display = 'none';
+                
+                document.getElementById('resultContent').innerHTML = `
+                    <div class="info-text">
+                        Заполните форму и нажмите "Рассчитать" для получения детализации дохода
+                    </div>
+                `;
+                
+                localStorage.removeItem('calculatorData');
+                hasUnsavedData = false;
+            }
+        }
+
+        function printResult() {
+            window.print();
+        }
+
+        function copyResult() {
+            const data = window.lastCalculationResult;
+            if (!data) {
+                showError('Сначала выполните расчёт');
+                return;
+            }
+
+            let text = `Расчёт мотивации администратора\n`;
+            text += `===============================\n`;
+            text += `Сотрудник: ${data.employeeName}\n`;
+            text += `Грейд: ${data.grade}\n\n`;
+            
+            if (data.criticalViolationApplied) {
+                text += `⚠️ КРИТИЧНОЕ НАРУШЕНИЕ СЕРВИСА\n`;
+                text += `Все бонусы обнулены.\n`;
+                if (data.seniorityBonus > 0) {
+                    text += `💾 Доплата за стаж сохранена: ${formatCurrency(data.seniorityBonus)}\n`;
+                }
+                text += `\n`;
+            }
+            
+            text += `Фиксированная часть:\n`;
+            text += `- Обычные смены: ${formatCurrency(data.fixedPart.regular)}\n`;
+            
+            if (data.fixedPart.overtime > 0) {
+                text += `- Сверхурочные часы: ${formatCurrency(data.fixedPart.overtime)}\n`;
+            }
+
+            if (data.teamBonus.percent > 0) {
+                text += `\nКомандный бонус (${data.teamBonus.percent}%):\n`;
+                text += `- База (смены + сверхурочные): ${formatCurrency(data.teamBonus.base)}\n`;
+                text += `- Сумма: ${formatCurrency(data.teamBonus.amount)}\n`;
+            } else if (data.teamBonus.zeroedReason) {
+                text += `\nКомандный бонус: 0 ₽ (${data.teamBonus.zeroedReason})\n`;
+            }
+            
+            if (data.individualBonus.percent > 0) {
+                text += `Индивидуальный бонус (${data.individualBonus.percent}%): ${formatCurrency(data.individualBonus.amount)}\n`;
+            } else if (data.individualBonus.zeroedReason) {
+                text += `Индивидуальный бонус: 0 ₽ (${data.individualBonus.zeroedReason})\n`;
+            }
+
+            if (data.seniorityBonus > 0) {
+                text += `\nДоплата за стаж: ${formatCurrency(data.seniorityBonus)}`;
+                if (data.criticalViolationApplied) {
+                    text += ` (сохранена несмотря на критичное нарушение)`;
+                }
+                text += `\n`;
+            }
+
+            if (data.goodsBonus.zeroedReason) {
+                text += `\nПродажи товаров (${data.clinicName}):\n`;
+                text += `- План: ${formatCurrency(data.goodsBonus.plan)}\n`;
+                text += `- Факт: ${formatCurrency(data.goodsBonus.salesAmount)} (${data.goodsBonus.percent}%)\n`;
+                text += `- Доплата: 0 ₽ (${data.goodsBonus.zeroedReason})\n`;
+            } else {
+                text += `\nПродажи товаров (${data.clinicName}):\n`;
+                text += `- План: ${formatCurrency(data.goodsBonus.plan)}\n`;
+                text += `- Факт: ${formatCurrency(data.goodsBonus.salesAmount)} (${data.goodsBonus.percent}%)\n`;
+                text += `- Доплата: ${formatCurrency(data.goodsBonus.amount)}\n`;
+            }
+
+            text += `\nБаза для коэффициента дисциплины: ${formatCurrency(data.baseForDiscipline)}\n`;
+            text += `Коэффициент дисциплины (${formatPercent(data.discipline.coefficient)}): ${data.disciplineAdjustment >= 0 ? '+' : ''}${formatCurrency(data.disciplineAdjustment)}\n`;
+            text += `Основание: ${data.discipline.reason}\n`;
+
+            text += `\nИТОГО К ВЫПЛАТЕ: ${formatCurrency(data.total)}\n`;
+            text += `\nℹ️ Расчёт носит информационный характер.\n`;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('✅ Результат скопирован в буфер обмена');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(text);
+                });
+            } else {
+                fallbackCopyTextToClipboard(text);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                alert('✅ Результат скопирован в буфер обмена');
+            } catch (err) {
+                showError('Не удалось скопировать результат');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // ===== МОДАЛЬНОЕ ОКНО =====
+        function showHelp() {
+            document.getElementById('helpModal').classList.add('active');
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').classList.remove('active');
+        }
+
+        document.getElementById('helpModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeHelp();
+            }
+        });
+
+        // ===== LOCALSTORAGE =====
+        function saveToLocalStorage() {
+            const data = {
+                employeeName: document.getElementById('employeeName').value,
+                grade: document.getElementById('grade').value,
+                regularShifts: document.getElementById('regularShifts').value,
+                overtimeHours: document.getElementById('overtimeHours').value,
+                clinicPlanPercent: document.getElementById('clinicPlanPercent').value,
+                primaryPatients: document.getElementById('primaryPatients').value,
+                clinic: document.getElementById('clinic').value,
+                goodsSalesAmount: document.getElementById('goodsSalesAmount').value,
+                violationsCount: document.getElementById('violationsCount').value,
+                criticalViolation: document.getElementById('criticalViolation').checked,
+                seniority: document.getElementById('seniority').value
+            };
+            localStorage.setItem('calculatorData', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('calculatorData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    const fields = ['employeeName', 'grade', 'regularShifts', 'overtimeHours', 
+                                   'clinicPlanPercent', 'primaryPatients', 'clinic', 'goodsSalesAmount',
+                                   'violationsCount', 'seniority'];
+                    
+                    fields.forEach(field => {
+                        const element = document.getElementById(field);
+                        if (element && data[field] !== undefined && data[field] !== '') {
+                            element.value = data[field];
+                        }
+                    });
+
+                    const checkboxes = ['criticalViolation'];
+                    checkboxes.forEach(field => {
+                        const element = document.getElementById(field);
+                        if (element && data[field] !== undefined) {
+                            element.checked = data[field];
+                        }
+                    });
+
+                    updatePlanInfo();
+                } catch (e) {
+                    console.error('Ошибка загрузки данных:', e);
+                }
+            }
+        }
+
+        // ===== ЗАЩИТА ОТ ЗАКРЫТИЯ =====
+        let hasUnsavedData = false;
+
+        document.querySelectorAll('input, select').forEach(element => {
+            element.addEventListener('change', () => {
+                hasUnsavedData = true;
+            });
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (hasUnsavedData) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // ===== ИНИЦИАЛИЗАЦИЯ =====
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+        });
+    </script>
+</body>
+</html>
